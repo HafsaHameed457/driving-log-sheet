@@ -1,0 +1,41 @@
+# ---------- Project reference docs & planning (not for GitHub) ----------
+new-full-stack-dev-assessment.docx
+fmsca-image.png
+blank-paper-log.png
+PLAN.md
+
+# ---------- Python / Django ----------
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+staticfiles/
+
+# ---------- Node / React (Vite) ----------
+node_modules/
+dist/
+build/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ---------- Secrets & environment ----------
+.env
+.env.*
+!.env.example
+
+# ---------- Editors & OS ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+PLAN.md
+
