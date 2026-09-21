@@ -29,6 +29,10 @@ def _handle_response(resp: requests.Response) -> dict:
         raise GeoServiceUnavailableError(
             f"OpenRouteService unavailable (HTTP {resp.status_code})"
         )
+    if resp.status_code == 404:
+        raise NoRouteFoundError(
+            "One or more locations are not near a routable road"
+        )
     if resp.status_code != 200:
         raise GeoServiceUnavailableError(
             f"OpenRouteService returned HTTP {resp.status_code}: {resp.text[:200]}"
