@@ -10,7 +10,8 @@ from .errors import (
     NoRouteFoundError,
 )
 
-ORS_BASE_URL = "https://api.openrouteservice.org"
+ORS_BASE_URL = os.getenv("ORS_BASE_URL", "https://api.heigit.org/openrouteservice")
+PELIAS_BASE_URL = os.getenv("PELIAS_BASE_URL", "https://api.heigit.org/pelias/v1")
 
 
 def _get_api_key() -> str:
@@ -57,7 +58,7 @@ def geocode(query: str) -> dict:
     api_key = _get_api_key()
     try:
         resp = requests.get(
-            f"{ORS_BASE_URL}/geocode/search",
+            f"{PELIAS_BASE_URL}/search",
             params={"api_key": api_key, "text": query, "size": 1},
             timeout=10,
         )
@@ -97,7 +98,7 @@ def reverse_geocode(lat: float, lng: float) -> str:
     api_key = _get_api_key()
     try:
         resp = requests.get(
-            f"{ORS_BASE_URL}/geocode/reverse",
+            f"{PELIAS_BASE_URL}/reverse",
             params={
                 "api_key": api_key,
                 "point.lon": lng,
