@@ -33,7 +33,7 @@ function FitBounds({ geometry }) {
 export default function RouteMap({ geometry, stops = [] }) {
   if (!geometry || !Array.isArray(geometry) || geometry.length < 2) {
     return (
-      <div className="h-[600px] flex items-center justify-center bg-slate-100 rounded-lg text-slate-500">
+      <div className="h-[500px] flex items-center justify-center bg-slate-100 rounded-lg text-slate-500">
         No route to display.
       </div>
     );
@@ -45,7 +45,7 @@ export default function RouteMap({ geometry, stops = [] }) {
         center={[geometry[0][0], geometry[0][1]]}
         zoom={6}
         scrollWheelZoom={true}
-        style={{ height: "600px", width: "100%" }}
+        style={{ height: "500px", width: "100%" }}
         className="rounded-lg overflow-hidden border border-slate-200"
       >
         <TileLayer

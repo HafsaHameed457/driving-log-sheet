@@ -69,8 +69,8 @@ export default function TripForm({ onSubmit, loading }) {
         dropoff_location: drop,
         cycle_used_hrs: cycle,
       });
-    } catch (err) {
-      setError(err.message);
+    } catch {
+      // App surfaces network errors above the form card.
     }
   }
 
@@ -78,8 +78,18 @@ export default function TripForm({ onSubmit, loading }) {
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
       <h2 className="text-lg font-semibold text-navy-800 mb-4">Trip Details</h2>
 
+      {error && (
+        <div
+          className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} noValidate>
         <LocationInput
+          id="current-location"
           label="Current Location"
           value={current_location}
           onChange={setCurrentLocation}
@@ -87,6 +97,7 @@ export default function TripForm({ onSubmit, loading }) {
           required
         />
         <LocationInput
+          id="pickup-location"
           label="Pickup Location"
           value={pickup_location}
           onChange={setPickupLocation}
@@ -94,6 +105,7 @@ export default function TripForm({ onSubmit, loading }) {
           required
         />
         <LocationInput
+          id="dropoff-location"
           label="Dropoff Location"
           value={dropoff_location}
           onChange={setDropoffLocation}
@@ -102,10 +114,14 @@ export default function TripForm({ onSubmit, loading }) {
         />
 
         <div className="mb-4">
-          <label className="block text-sm font-medium text-navy-700 mb-1">
+          <label
+            htmlFor="cycle-used-hrs"
+            className="block text-sm font-medium text-navy-700 mb-1"
+          >
             Current Cycle Used (hrs)<span className="text-red-500"> *</span>
           </label>
           <input
+            id="cycle-used-hrs"
             type="number"
             value={cycle_used_hrs}
             onChange={(e) => setCycleUsedHrs(e.target.value)}
@@ -113,7 +129,7 @@ export default function TripForm({ onSubmit, loading }) {
             min={0}
             max={70}
             step={0.5}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus:border-amber-500"
           />
         </div>
 
@@ -121,7 +137,7 @@ export default function TripForm({ onSubmit, loading }) {
           <button
             type="submit"
             disabled={loading}
-            className="bg-amber-500 hover:bg-amber-600 text-navy-900 font-semibold py-2.5 px-6 rounded-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-amber-500 hover:bg-amber-600 text-navy-900 font-semibold py-2.5 px-6 rounded-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
           >
             {loading && (
               <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-navy-900 border-t-transparent" />
@@ -132,17 +148,11 @@ export default function TripForm({ onSubmit, loading }) {
           <button
             type="button"
             onClick={fillSample}
-            className="text-navy-700 underline hover:text-amber-600 text-sm"
+            className="text-navy-700 underline hover:text-amber-600 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded px-1"
           >
             Try sample trip
           </button>
         </div>
-
-        {error && (
-          <p className="mt-3 text-sm text-red-600" role="alert">
-            {error}
-          </p>
-        )}
       </form>
     </div>
   );

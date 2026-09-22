@@ -7,8 +7,9 @@ export default function LogSheetList({ logs }) {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-navy-800">Daily Logs</h2>
         <button
+          type="button"
           onClick={() => window.print()}
-          className="no-print text-sm px-3 py-1.5 rounded-md border border-slate-300 hover:bg-slate-100"
+          className="no-print text-sm px-3 py-1.5 rounded-md border border-slate-300 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
         >
           Print / Save PDF
         </button>

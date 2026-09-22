@@ -1,6 +1,9 @@
 import { useState } from "react";
 import TripForm from "./components/TripForm";
 import RouteMap from "./components/RouteMap";
+import TripSummary from "./components/TripSummary";
+import EmptyState from "./components/EmptyState";
+import LoadingSkeleton from "./components/LoadingSkeleton";
 import { planTrip } from "./api/client";
 import LogSheetList from "./components/LogSheetList";
 
@@ -35,56 +38,46 @@ export default function App() {
         </p>
       </header>
 
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8 py-8">
-        {error && (
-          <div
-            className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            role="alert"
-          >
-            {error}
+      <main className="max-w-7xl mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left column: form + summary */}
+          <div className="lg:col-span-1 space-y-6">
+            {error && (
+              <div
+                className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                role="alert"
+              >
+                <div className="font-medium mb-1">Could not plan trip</div>
+                <div>{error}</div>
+              </div>
+            )}
+            <TripForm onSubmit={handleSubmit} loading={loading} />
+            {result && <TripSummary result={result} />}
           </div>
-        )}
 
-        <TripForm onSubmit={handleSubmit} loading={loading} />
-
-        {result && (
-          <div className="mt-6">
-            <div className="grid grid-cols-3 gap-4 mb-3 text-sm">
-              <div>
-                <span className="text-slate-500">Total miles:</span>{" "}
-                <span className="font-semibold">
-                  {Math.round(result.route.total_miles)}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500">Drive hours:</span>{" "}
-                <span className="font-semibold">
-                  {result.route.total_drive_hrs.toFixed(1)}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500">Stops:</span>{" "}
-                <span className="font-semibold">{result.stops.length}</span>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-              <h2 className="text-lg font-semibold text-navy-800 mb-3">Route</h2>
-              <RouteMap geometry={result.route.geometry} stops={result.stops} />
-            </div>
-
-            <LogSheetList logs={result.logs} />
-
-            <details className="mt-4 text-sm">
-              <summary className="cursor-pointer text-slate-600">
-                Debug JSON
-              </summary>
-              <pre className="mt-2 overflow-auto rounded-md bg-slate-900 text-slate-100 p-3 text-xs">
-                {JSON.stringify(result, null, 2)}
-              </pre>
-            </details>
+          {/* Right column: map + logs */}
+          <div className="lg:col-span-2 space-y-6">
+            {loading ? (
+              <LoadingSkeleton />
+            ) : (
+              <>
+                {result && (
+                  <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+                    <h2 className="text-lg font-semibold text-navy-800 mb-3">
+                      Route
+                    </h2>
+                    <RouteMap
+                      geometry={result.route.geometry}
+                      stops={result.stops}
+                    />
+                  </div>
+                )}
+                {result && <LogSheetList logs={result.logs} />}
+                {!result && !loading && <EmptyState />}
+              </>
+            )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );

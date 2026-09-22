@@ -22,11 +22,16 @@ body {
 }
 
 /* Print styles */
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
 @media print {
   body { @apply bg-white; }
   .no-print { display: none !important; }
   header { display: none !important; }
-  .log-sheet { page-break-after: always; border: none; box-shadow: none; border-radius: 0; }
+  .log-sheet { page-break-after: always; break-after: page; border: none; box-shadow: none; border-radius: 0; }
   body * { visibility: hidden; }
   .log-sheet, .log-sheet * { visibility: visible; }
   .log-sheet { position: relative; left: 0; top: 0; }

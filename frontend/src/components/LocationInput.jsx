@@ -5,6 +5,7 @@ import { searchLocations } from "../utils/api";
 const DEBOUNCE_MS = 300;
 
 export default function LocationInput({
+  id,
   label,
   value,
   onChange,
@@ -66,11 +67,15 @@ export default function LocationInput({
 
   return (
     <div className="mb-4" onKeyDown={handleKeyDown}>
-      <label className="block text-sm font-medium text-navy-700 mb-1">
+      <label
+        htmlFor={id}
+        className="block text-sm font-medium text-navy-700 mb-1"
+      >
         {label}
         {required && <span className="text-red-500"> *</span>}
       </label>
       <AsyncSelect
+        inputId={id}
         cacheOptions
         defaultOptions={false}
         loadOptions={loadOptions}
