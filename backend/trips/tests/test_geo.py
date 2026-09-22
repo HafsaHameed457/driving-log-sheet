@@ -56,7 +56,7 @@ def route_response():
                     ]
                 },
                 "properties": {
-                    "legs": [
+                    "segments": [
                         {
                             "summary": {
                                 "distance": 260000,

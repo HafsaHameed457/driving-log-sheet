@@ -1,4 +1,5 @@
 import logging
+import itertools
 from dataclasses import asdict
 
 from django.http import JsonResponse
@@ -11,13 +12,57 @@ from .serializers import (
     TripResponseSerializer,
 )
 from .services.geo import geocode, get_route, point_at_distance, reverse_geocode
-from .services.errors import GeoServiceError
+from .services.errors import GeoServiceError, NoRouteFoundError
 from .services.hos_planner import plan_trip
 from .services.logs import build_daily_logs
 
 logger = logging.getLogger(__name__)
 
 MAX_MILES = 6000
+
+_ROUTE_OFFSETS = [0.01, -0.01, 0.02, -0.02]
+
+
+def _try_get_route(waypoints: list[dict]) -> dict:
+    """Try get_route, nudging failing waypoints if routing fails.
+
+    ORS geocoder returns city centroids that may not be within 350m of a
+    routable road. Parses the error to find which coordinate failed and
+    retries only that waypoint with small offsets.
+    """
+    try:
+        route = get_route(waypoints)
+        if route["total_miles"] > 0:
+            return route
+    except NoRouteFoundError as e:
+        failing_idx = None
+        msg = str(e)
+        if "coordinate" in msg:
+            try:
+                coord_str = msg.split("coordinate")[1].split(":")[0].strip()
+                failing_idx = int(coord_str)
+            except (IndexError, ValueError):
+                pass
+
+    for wp_idx in range(len(waypoints)):
+        if failing_idx is not None and wp_idx != failing_idx:
+            continue
+        for dx in _ROUTE_OFFSETS:
+            for dy in _ROUTE_OFFSETS:
+                adjusted = [dict(w) for w in waypoints]
+                adjusted[wp_idx] = {
+                    "lat": waypoints[wp_idx]["lat"] + dx,
+                    "lng": waypoints[wp_idx]["lng"] + dy,
+                    "label": waypoints[wp_idx]["label"],
+                }
+                try:
+                    route = get_route(adjusted)
+                    if route["total_miles"] > 0:
+                        return route
+                except NoRouteFoundError:
+                    continue
+
+    raise NoRouteFoundError("One or more locations are not near a routable road")
 
 
 def health_check(request):
@@ -43,7 +88,7 @@ class TripView(APIView):
             geo_dropoff = geocode(data["dropoff_location"])
 
             waypoints = [geo_current, geo_pickup, geo_dropoff]
-            route = get_route(waypoints)
+            route = _try_get_route(waypoints)
 
             if route["total_miles"] > MAX_MILES:
                 return Response(
