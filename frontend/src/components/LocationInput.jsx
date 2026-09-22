@@ -1,19 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AsyncSelect from "react-select/async";
 import { searchLocations } from "../utils/api";
 
-const loadOptions = (inputValue, callback) => {
-  const query = inputValue.trim();
-  if (query.length < 3) {
-    callback([]);
-    return;
-  }
-  searchLocations(query)
-    .then((results) => {
-      callback((results || []).map((r) => ({ label: r.label, value: r })));
-    })
-    .catch(() => callback([]));
-};
+const DEBOUNCE_MS = 300;
 
 export default function LocationInput({
   label,
@@ -23,12 +12,34 @@ export default function LocationInput({
   required,
 }) {
   const [inputValue, setInputValue] = useState("");
+  const [searchFailed, setSearchFailed] = useState(false);
   const timerRef = useRef(null);
 
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
+  }, []);
+
+  const loadOptions = useCallback((text, callback) => {
+    const query = text.trim();
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (query.length < 3) {
+      setSearchFailed(false);
+      callback([]);
+      return;
+    }
+    timerRef.current = setTimeout(() => {
+      searchLocations(query)
+        .then((results) => {
+          setSearchFailed(false);
+          callback((results || []).map((r) => ({ label: r.label, value: r })));
+        })
+        .catch(() => {
+          setSearchFailed(true);
+          callback([]);
+        });
+    }, DEBOUNCE_MS);
   }, []);
 
   const selected = value
@@ -69,11 +80,14 @@ export default function LocationInput({
         onChange={handleChange}
         placeholder={placeholder}
         isClearable
-        noOptionsMessage={({ inputValue: v }) =>
-          v.trim().length < 3
+        noOptionsMessage={({ inputValue: v }) => {
+          if (searchFailed) {
+            return "Location search is unavailable. Please try again.";
+          }
+          return v.trim().length < 3
             ? "Type at least 3 characters"
-            : "No matching locations"
-        }
+            : "No matching locations";
+        }}
         loadingMessage={() => "Searching..."}
         styles={{
           control: (base, state) => ({
