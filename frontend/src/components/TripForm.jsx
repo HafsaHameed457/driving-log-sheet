@@ -32,15 +32,15 @@ export default function TripForm({ onSubmit, loading }) {
     const drop = dropoff_location.trim();
 
     if (!cur) {
-      setError("Current location is required.");
+      setError("Please select a current location from the suggestions.");
       return;
     }
     if (!pick) {
-      setError("Pickup location is required.");
+      setError("Please select a pickup location from the suggestions.");
       return;
     }
     if (!drop) {
-      setError("Dropoff location is required.");
+      setError("Please select a dropoff location from the suggestions.");
       return;
     }
 
@@ -59,6 +59,8 @@ export default function TripForm({ onSubmit, loading }) {
       setError("Pickup and dropoff cannot be the same location.");
       return;
     }
+
+    setError("");
 
     try {
       await onSubmit({

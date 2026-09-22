@@ -1,5 +1,6 @@
 import { useState } from "react";
 import TripForm from "./components/TripForm";
+import RouteMap from "./components/RouteMap";
 import { planTrip } from "./api/client";
 
 export default function App() {
@@ -46,13 +47,34 @@ export default function App() {
         <TripForm onSubmit={handleSubmit} loading={loading} />
 
         {result && (
-          <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4">
-            <h3 className="text-sm font-semibold text-navy-800 mb-2">
-              Plan result (temporary JSON dump)
-            </h3>
-            <pre className="text-xs overflow-auto max-h-96 bg-slate-50 rounded p-3">
-              {JSON.stringify(result, null, 2)}
-            </pre>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-lg border border-slate-200 bg-white p-4">
+              <h3 className="text-sm font-semibold text-navy-800 mb-3">Trip summary</h3>
+              <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
+                <div>
+                  <div className="text-slate-500">Total miles</div>
+                  <div className="font-semibold text-navy-800">
+                    {Number(result.route.total_miles).toFixed(1)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Drive hours</div>
+                  <div className="font-semibold text-navy-800">
+                    {Number(result.route.total_drive_hrs).toFixed(1)}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Stops</div>
+                  <div className="font-semibold text-navy-800">{result.stops.length}</div>
+                </div>
+                <div>
+                  <div className="text-slate-500">Log days</div>
+                  <div className="font-semibold text-navy-800">{result.logs.length}</div>
+                </div>
+              </div>
+            </div>
+
+            <RouteMap geometry={result.route.geometry} stops={result.stops} />
           </div>
         )}
       </main>
