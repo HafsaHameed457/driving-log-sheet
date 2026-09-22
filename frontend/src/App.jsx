@@ -47,34 +47,39 @@ export default function App() {
         <TripForm onSubmit={handleSubmit} loading={loading} />
 
         {result && (
-          <div className="mt-6 space-y-4">
-            <div className="rounded-lg border border-slate-200 bg-white p-4">
-              <h3 className="text-sm font-semibold text-navy-800 mb-3">Trip summary</h3>
-              <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
-                <div>
-                  <div className="text-slate-500">Total miles</div>
-                  <div className="font-semibold text-navy-800">
-                    {Number(result.route.total_miles).toFixed(1)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Drive hours</div>
-                  <div className="font-semibold text-navy-800">
-                    {Number(result.route.total_drive_hrs).toFixed(1)}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Stops</div>
-                  <div className="font-semibold text-navy-800">{result.stops.length}</div>
-                </div>
-                <div>
-                  <div className="text-slate-500">Log days</div>
-                  <div className="font-semibold text-navy-800">{result.logs.length}</div>
-                </div>
+          <div className="mt-6">
+            <div className="grid grid-cols-3 gap-4 mb-3 text-sm">
+              <div>
+                <span className="text-slate-500">Total miles:</span>{" "}
+                <span className="font-semibold">
+                  {Math.round(result.route.total_miles)}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500">Drive hours:</span>{" "}
+                <span className="font-semibold">
+                  {result.route.total_drive_hrs.toFixed(1)}
+                </span>
+              </div>
+              <div>
+                <span className="text-slate-500">Stops:</span>{" "}
+                <span className="font-semibold">{result.stops.length}</span>
               </div>
             </div>
 
-            <RouteMap geometry={result.route.geometry} stops={result.stops} />
+            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
+              <h2 className="text-lg font-semibold text-navy-800 mb-3">Route</h2>
+              <RouteMap geometry={result.route.geometry} stops={result.stops} />
+            </div>
+
+            <details className="mt-4 text-sm">
+              <summary className="cursor-pointer text-slate-600">
+                Debug JSON
+              </summary>
+              <pre className="mt-2 overflow-auto rounded-md bg-slate-900 text-slate-100 p-3 text-xs">
+                {JSON.stringify(result, null, 2)}
+              </pre>
+            </details>
           </div>
         )}
       </main>
