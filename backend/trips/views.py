@@ -12,7 +12,7 @@ from .serializers import (
     TripResponseSerializer,
 )
 from .services.geo import geocode, get_route, point_at_distance, reverse_geocode
-from .services.errors import GeoServiceError, NoRouteFoundError
+from .services.errors import GeoServiceError, LocationNotFoundError, NoRouteFoundError
 from .services.hos_planner import plan_trip
 from .services.logs import build_daily_logs
 
@@ -67,6 +67,22 @@ def _try_get_route(waypoints: list[dict]) -> dict:
 
 def health_check(request):
     return JsonResponse({"status": "ok"})
+
+
+class GeocodeView(APIView):
+    """Geocode proxy so the ORS API key never reaches the frontend."""
+
+    def get(self, request):
+        q = request.query_params.get("q", "").strip()
+        if len(q) < 3:
+            return Response([], status=200)
+        try:
+            result = geocode(q)
+            return Response([result], status=200)
+        except LocationNotFoundError:
+            return Response([], status=200)
+        except GeoServiceError as e:
+            return Response({"error": e.message}, status=e.http_status)
 
 
 class TripView(APIView):
