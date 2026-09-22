@@ -1,16 +1,36 @@
-# React + Vite
+# Driving Log Sheet — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + Vite + Tailwind UI for planning a truck route and generating FMCSA-compliant daily log sheets.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+Dev server runs at `http://localhost:5173` by default.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Environment variables
 
-## Expanding the Oxlint configuration
+Copy `.env.example` to `.env` and set:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_URL` | Base URL of the Django API (e.g. `http://localhost:8000` locally, or your deployed backend URL). Falls back to `http://localhost:8000` if unset. |
+
+## Build
+
+```bash
+npm run build
+```
+
+Outputs static files to `dist/`.
+
+## Deploy to Vercel
+
+1. Push the repository to GitHub.
+2. Import the repo on [vercel.com](https://vercel.com).
+3. Set the project **root directory** to `frontend`.
+4. Set the environment variable `VITE_API_URL` to your deployed backend URL.
+5. Deploy.

@@ -21,11 +21,20 @@ body {
   @apply bg-slate-50 text-navy-800 font-sans antialiased;
 }
 
-/* Print styles: hide everything except elements with class .print-only */
+/* Print styles */
+@page {
+  size: A4 landscape;
+  margin: 10mm;
+}
+
 @media print {
   body { @apply bg-white; }
   .no-print { display: none !important; }
-  .print-only { display: block !important; }
+  header { display: none !important; }
+  .log-sheet { page-break-after: always; break-after: page; border: none; box-shadow: none; border-radius: 0; }
+  body * { visibility: hidden; }
+  .log-sheet, .log-sheet * { visibility: visible; }
+  .log-sheet { position: relative; left: 0; top: 0; }
 }
 
 /* Leaflet fix - needed when map is inside a flex container */
