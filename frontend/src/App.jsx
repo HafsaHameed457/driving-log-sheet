@@ -2,6 +2,7 @@ import { useState } from "react";
 import TripForm from "./components/TripForm";
 import RouteMap from "./components/RouteMap";
 import { planTrip } from "./api/client";
+import LogSheetList from "./components/LogSheetList";
 
 export default function App() {
   const [result, setResult] = useState(null);
@@ -71,6 +72,8 @@ export default function App() {
               <h2 className="text-lg font-semibold text-navy-800 mb-3">Route</h2>
               <RouteMap geometry={result.route.geometry} stops={result.stops} />
             </div>
+
+            <LogSheetList logs={result.logs} />
 
             <details className="mt-4 text-sm">
               <summary className="cursor-pointer text-slate-600">
