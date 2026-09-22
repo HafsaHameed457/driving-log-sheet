@@ -190,7 +190,7 @@ def get_route(waypoints: list[dict]) -> dict:
         raise NoRouteFoundError("No route found between the given locations")
 
     route = features[0]
-    legs_data = route.get("properties", {}).get("legs", [])
+    legs_data = route.get("properties", {}).get("segments", [])
     geom_coords = route.get("geometry", {}).get("coordinates", [])
 
     geometry = [[c[1], c[0]] for c in geom_coords]
