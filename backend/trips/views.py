@@ -1,11 +1,23 @@
+import logging
+from dataclasses import asdict
+
 from django.http import JsonResponse
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from .serializers import TripRequestSerializer
-from .services.geo import geocode, get_route
+from .serializers import (
+    TripRequestSerializer,
+    TripResponseSerializer,
+)
+from .services.geo import geocode, get_route, point_at_distance, reverse_geocode
 from .services.errors import GeoServiceError
+from .services.hos_planner import plan_trip
+from .services.logs import build_daily_logs
+
+logger = logging.getLogger(__name__)
+
+MAX_MILES = 6000
 
 
 def health_check(request):
@@ -13,10 +25,9 @@ def health_check(request):
 
 
 class TripView(APIView):
-    """Smoke-test endpoint for Phase B2.
+    """Full trip planning endpoint.
 
-    Accepts trip input, geocodes locations, fetches the route,
-    and returns a partial response (no stops/logs yet).
+    Accepts trip input, geocodes, routes, plans HOS, builds daily logs.
     """
 
     def post(self, request):
@@ -34,24 +45,61 @@ class TripView(APIView):
             waypoints = [geo_current, geo_pickup, geo_dropoff]
             route = get_route(waypoints)
 
-            return Response({
+            if route["total_miles"] > MAX_MILES:
+                return Response(
+                    {"error": "Trip is too long to plan in a single request (>6000 miles)."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            pickup_miles = route["legs"][0]["end_distance_from_start_mi"]
+            dropoff_miles = route["legs"][1]["end_distance_from_start_mi"]
+            cycle_used_hrs = data["cycle_used_hrs"]
+
+            geo_cache: dict[int, str] = {}
+
+            def location_lookup(miles: float) -> str:
+                rounded = int(round(miles))
+                if rounded in geo_cache:
+                    return geo_cache[rounded]
+                pt = point_at_distance(route["geometry"], miles)
+                try:
+                    label = reverse_geocode(pt["lat"], pt["lng"])
+                except GeoServiceError:
+                    label = f"Mile {miles:.0f}"
+                geo_cache[rounded] = label
+                return label
+
+            result = plan_trip(
+                route=route,
+                pickup_miles=pickup_miles,
+                dropoff_miles=dropoff_miles,
+                cycle_used_hrs=cycle_used_hrs,
+                geometry=route["geometry"],
+                location_lookup=location_lookup,
+            )
+
+            daily_logs = build_daily_logs(result, cycle_used_hrs)
+
+            response_data = {
                 "route": {
-                    "total_miles": route["total_miles"],
-                    "total_drive_hrs": route["total_duration_hrs"],
+                    "total_miles": result.total_miles,
+                    "total_drive_hrs": result.total_drive_hrs,
                     "geometry": route["geometry"],
                 },
-                "geocoded": {
-                    "current": geo_current,
-                    "pickup": geo_pickup,
-                    "dropoff": geo_dropoff,
-                },
-                "note": "B2 smoke test — stops and logs will be added in B3/B4",
-            })
+                "stops": [asdict(s) for s in result.stops],
+                "logs": [asdict(l) for l in daily_logs],
+            }
+
+            resp_serializer = TripResponseSerializer(data=response_data)
+            resp_serializer.is_valid(raise_exception=True)
+
+            return Response(resp_serializer.data)
 
         except GeoServiceError as e:
             return Response({"error": e.message}, status=e.http_status)
         except Exception:
+            logger.exception("Unexpected error planning trip")
             return Response(
-                {"error": "An unexpected error occurred"},
+                {"error": "Internal error while planning trip."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
