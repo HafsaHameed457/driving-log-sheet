@@ -178,6 +178,38 @@ class TestGetRoute:
             with pytest.raises(NoRouteFoundError):
                 get_route([{"lat": 0, "lng": 0}, {"lat": 1, "lng": 1}])
 
+    def test_ors10_inline_segment_summary(self, mock_ors_key):
+        """ORS 10+ puts distance/duration directly on the segment (no nested summary)."""
+        response = {
+            "features": [
+                {
+                    "geometry": {
+                        "coordinates": [
+                            [-96.7970, 32.7767],
+                            [-104.9903, 39.7392],
+                        ]
+                    },
+                    "properties": {
+                        "summary": {"distance": 1000000, "duration": 36000},
+                        "segments": [
+                            {"distance": 1000000, "duration": 36000, "steps": []}
+                        ],
+                    },
+                }
+            ]
+        }
+        with patch("trips.services.geo.requests.post") as mock_post:
+            mock_post.return_value = MagicMock(
+                status_code=200, json=lambda: response
+            )
+            result = get_route(
+                [{"lat": 32.7767, "lng": -96.7970}, {"lat": 39.7392, "lng": -104.9903}]
+            )
+
+        assert result["total_miles"] == pytest.approx(621.37, abs=0.5)
+        assert result["total_duration_hrs"] == pytest.approx(10.0, abs=0.1)
+        assert result["legs"][0]["miles"] == pytest.approx(621.37, abs=0.5)
+
     def test_server_error(self, mock_ors_key):
         with patch("trips.services.geo.requests.post") as mock_post:
             mock_post.return_value = MagicMock(status_code=500, text="Internal error")

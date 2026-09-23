@@ -30,12 +30,12 @@ def _try_get_route(waypoints: list[dict]) -> dict:
     routable road. Parses the error to find which coordinate failed and
     retries only that waypoint with small offsets.
     """
+    failing_idx = None
     try:
         route = get_route(waypoints)
         if route["total_miles"] > 0:
             return route
     except NoRouteFoundError as e:
-        failing_idx = None
         msg = str(e)
         if "coordinate" in msg:
             try:
