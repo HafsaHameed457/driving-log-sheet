@@ -22,21 +22,25 @@ def _get_api_key() -> str:
     return key
 
 
-def _handle_response(resp: requests.Response) -> dict:
+def _handle_response(resp: requests.Response, resource: str = "ORS") -> dict:
     """Raise appropriate errors for HTTP failures."""
     if resp.status_code == 429:
-        raise GeoServiceUnavailableError("Rate limited by OpenRouteService")
+        raise GeoServiceUnavailableError(f"Rate limited by {resource}")
     if resp.status_code >= 500:
         raise GeoServiceUnavailableError(
-            f"OpenRouteService unavailable (HTTP {resp.status_code})"
+            f"{resource} unavailable (HTTP {resp.status_code})"
         )
     if resp.status_code == 404:
-        raise NoRouteFoundError(
-            "One or more locations are not near a routable road"
+        if resource == "Directions":
+            raise NoRouteFoundError(
+                "One or more locations are not near a routable road"
+            )
+        raise GeoServiceUnavailableError(
+            f"{resource} endpoint not found (HTTP 404) — check base URL: {resp.url}"
         )
     if resp.status_code != 200:
         raise GeoServiceUnavailableError(
-            f"OpenRouteService returned HTTP {resp.status_code}: {resp.text[:200]}"
+            f"{resource} returned HTTP {resp.status_code}: {resp.text[:200]}"
         )
     return resp.json()
 
@@ -65,7 +69,7 @@ def geocode(query: str) -> dict:
     except requests.RequestException as e:
         raise GeoServiceUnavailableError(f"Network error geocoding '{query}': {e}")
 
-    data = _handle_response(resp)
+    data = _handle_response(resp, "Geocode")
     features = data.get("features", [])
     if not features:
         raise LocationNotFoundError(f"Location not found: '{query}'")
@@ -112,7 +116,7 @@ def reverse_geocode(lat: float, lng: float) -> str:
             f"Network error reverse geocoding ({lat}, {lng}): {e}"
         )
 
-    data = _handle_response(resp)
+    data = _handle_response(resp, "Reverse geocode")
     features = data.get("features", [])
     if not features:
         raise LocationNotFoundError(
@@ -185,7 +189,7 @@ def get_route(waypoints: list[dict]) -> dict:
     if last_resp.status_code == 401:
         raise GeoServiceConfigError("ORS API key is invalid or unauthorized")
 
-    data = _handle_response(last_resp)
+    data = _handle_response(last_resp, "Directions")
     features = data.get("features", [])
     if not features:
         raise NoRouteFoundError("No route found between the given locations")
@@ -200,8 +204,12 @@ def get_route(waypoints: list[dict]) -> dict:
     total_duration = 0.0
     legs = []
     for i, leg in enumerate(legs_data):
-        dist_m = leg.get("summary", {}).get("distance", 0)
-        dur_s = leg.get("summary", {}).get("duration", 0)
+        summary = leg.get("summary")
+        if not isinstance(summary, dict):
+            # ORS 10+ inlines distance/duration directly on the segment
+            summary = leg
+        dist_m = summary.get("distance", 0)
+        dur_s = summary.get("duration", 0)
         leg_miles = dist_m / 1609.344
         leg_hours = dur_s / 3600.0
         total_miles += leg_miles
