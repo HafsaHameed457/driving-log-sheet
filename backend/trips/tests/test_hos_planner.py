@@ -359,3 +359,69 @@ def test_t10_stop_count_matches_expectation():
         assert type_counts["break"] >= 1
     if drive_hrs > 11.0:
         assert type_counts["rest"] >= 1
+
+
+# ============================================================
+# Regression A: No break immediately after coincident fuel stop
+# ============================================================
+def test_no_break_immediately_after_coincident_fuel():
+    geometry = [[0, 0], [0, 1]]
+    route = _make_route(1600.0, geometry=geometry)
+
+    result = plan_trip(
+        route=route, pickup_miles=500.0, dropoff_miles=1600.0,
+        cycle_used_hrs=0, geometry=geometry,
+        location_lookup=lambda m: f"Mile {m:.0f}", start_time=START,
+    )
+
+    fuel_stops = [s for s in result.stops if s.type == "fuel"]
+    break_stops = [s for s in result.stops if s.type == "break"]
+    assert len(fuel_stops) >= 1
+
+    for fuel in fuel_stops:
+        for brk in break_stops:
+            gap = abs(brk.miles_from_start - fuel.miles_from_start)
+            assert gap >= 1.0, (
+                f"Break at mile {brk.miles_from_start:.2f} within 1 mi of "
+                f"fuel stop at mile {fuel.miles_from_start:.2f}"
+            )
+
+
+# ============================================================
+# Regression B: Last duty day pads to midnight when event crosses midnight
+# ============================================================
+def test_last_day_pads_to_midnight_when_event_crosses_midnight():
+    geometry = [[0, 0], [0, 1]]
+    # Total drive ~15.82h; 11-hr rest shifts the finish so final on-duty
+    # crosses midnight (day 2 ends after 00:00 on day 3).
+    miles = 870.0
+    route = _make_route(miles, geometry=geometry)
+    pickup_mi = miles * 0.4
+    dropoff_mi = miles
+
+    start_time = datetime(2026, 10, 1, 6, 0)
+    result = plan_trip(
+        route=route, pickup_miles=pickup_mi, dropoff_miles=dropoff_mi,
+        cycle_used_hrs=0, geometry=geometry,
+        location_lookup=lambda m: f"Mile {m:.0f}", start_time=start_time,
+    )
+
+    # Find a calendar day whose last event ends after midnight
+    days_with_post_midnight_end = set()
+    for e in result.events:
+        if e.end.date() != e.start.date():
+            days_with_post_midnight_end.add(e.start.date())
+    assert days_with_post_midnight_end, (
+        "Expected at least one duty event crossing midnight"
+    )
+
+    all_days = set()
+    for e in result.events:
+        all_days.add(e.start.date())
+        all_days.add(e.end.date())
+
+    for day in sorted(all_days):
+        total = sum(_event_hours_in_day(e, day) for e in result.events)
+        assert abs(total - 24.0) <= 1.0 / 3600.0, (
+            f"Day {day}: {total * 3600:.3f} sec (expected 86400)"
+        )

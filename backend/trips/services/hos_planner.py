@@ -227,6 +227,8 @@ def plan_trip(
                 _add_event("on_duty", clock, clock + timedelta(minutes=stop_duration),
                            label, "Fueling")
                 _advance_clock(stop_duration / 60.0)
+                if drive_since_break >= 8.0:
+                    drive_since_break = 0.0
 
             elif reason == "break":
                 stop_duration = 30
@@ -334,7 +336,7 @@ def _fill_off_duty_gaps(events: list[DutyEvent]) -> None:
     last_duty_day = None
     for e in reversed(events):
         if e.status in ("driving", "on_duty", "sleeper"):
-            last_duty_day = e.start.date()
+            last_duty_day = e.end.date()
             break
     if last_duty_day is None:
         last_duty_day = events[-1].start.date()
