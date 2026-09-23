@@ -8,8 +8,8 @@ A full-stack app (Django + React) that takes trip details as input and produces:
 
 ## Live Demo
 
-- **Frontend:** <VERCEL_URL>
-- **Backend:** <RENDER_URL>
+- **Frontend:** https://frontend-one-nu-62.vercel.app/
+- **Backend:** https://driving-log-sheet.onrender.com
 
 > **Note:** The backend runs on Render's free tier and sleeps after 15 minutes of inactivity. The first request after a sleep may take 30-60 seconds to respond.
 
